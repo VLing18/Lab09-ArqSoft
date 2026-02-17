@@ -15,23 +15,34 @@ public class GimnasioApi {
             @Override
             public void handle(HttpExchange exchange) throws IOException {
                 if ("GET".equals(exchange.getRequestMethod())) {
-                    DatabaseConexion db = new DatabaseConexion();
-                    List<Miembro> miembros = db.obtenerMiembros();
-                    
-                    // Construir el JSON de la lista
-                    StringBuilder json = new StringBuilder("[");
-                    for (int i = 0; i < miembros.size(); i++) {
-                        json.append(miembros.get(i).toJson());
-                        if (i < miembros.size() - 1) json.append(",");
-                    }
-                    json.append("]");
+                    try {
+                        DatabaseConexion db = new DatabaseConexion();
+                        List<Miembro> miembros = db.obtenerMiembros();
+                        
+                        // Construir el JSON de la lista
+                        StringBuilder json = new StringBuilder("[");
+                        for (int i = 0; i < miembros.size(); i++) {
+                            json.append(miembros.get(i).toJson());
+                            if (i < miembros.size() - 1) json.append(",");
+                        }
+                        json.append("]");
 
-                    byte[] response = json.toString().getBytes();
-                    exchange.getResponseHeaders().set("Content-Type", "application/json");
-                    exchange.sendResponseHeaders(200, response.length);
-                    OutputStream os = exchange.getResponseBody();
-                    os.write(response);
-                    os.close();
+                        byte[] response = json.toString().getBytes("UTF-8");
+                        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+                        exchange.sendResponseHeaders(200, response.length);
+                        OutputStream os = exchange.getResponseBody();
+                        os.write(response);
+                        os.close();
+                    } catch (Exception e) {
+                        e.printStackTrace(); // Log del error en consola del servidor
+                        String errorMsg = "{\"error\": \"Error interno del servidor\"}";
+                        byte[] response = errorMsg.getBytes("UTF-8");
+                        exchange.getResponseHeaders().set("Content-Type", "application/json");
+                        exchange.sendResponseHeaders(500, response.length);
+                        OutputStream os = exchange.getResponseBody();
+                        os.write(response);
+                        os.close();
+                    }
                 } else {
                     exchange.sendResponseHeaders(405, -1); // Método no permitido
                 }
